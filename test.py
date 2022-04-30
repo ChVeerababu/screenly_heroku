@@ -11,9 +11,7 @@ host = os.environ.get('RDS_URL')
 user = os.environ.get('RDS_USER')
 password = os.environ.get('RDS_PASS')
 database = os.environ.get('RDS_DB')
-key=os.environ.get('API_KEY')
-lat=os.environ.get('LATITUDE')
-lng=os.environ.get('LONGTITUDE')
+
 
 
 con=p.connect(host=host,user=user,password=password,database=database)
@@ -27,66 +25,68 @@ def get_image(re):
 
     img = cur.fetchone()[0]
 
+
     return img
 
-def get_latlong(site):
+# def get_latlong(site):
     
-    query="select latitude,longitude from account where accountId={};".format(site)
-    cur.execute(query)
-    lat=eval(cur.fetchone()[0])
-    lng=eval(cur.fetchone()[1])
-    return lat,lng
+#     query="select latitude,longitude from account where accountId={};".format(site)
+#     cur.execute(query)
+#     lat=eval(cur.fetchone()[0])
+#     lng=eval(cur.fetchone()[1])
+#     return lat,lng
 
     
 
-def current_temp(lat,lng):
+# def current_temp(lat,lng):
     
-    api="https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=hourly,daily&appid={}".format(lat,lng,key)
+#     api="https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=hourly,daily&appid={}".format(lat,lng,key)
 
-    r=requests.get(api)
+#     r=requests.get(api)
 
-    data=r.json()
+#     data=r.json()
 
-    F=float(data['current']['temp'])
+#     F=float(data['current']['temp'])
 
-    c=F-273.15
+#     c=F-273.15
 
-    return c
+#     return c
 
 
-def get_temp(r):
+# def get_temp(r):
 
-    geo=get_latlong(site)
-    lat,lng=geo[0],geo[1]
-    print(lat,lng)
-    print(type(lat))
+#     geo=get_latlong(site)
+#     lat,lng=geo[0],geo[1]
+#     print(lat,lng)
+#     print(type(lat))
 
-    c=current_temp(lat,lng)
+#     c=current_temp(lat,lng)
 
-    if 20<c>28:
-        ad=4
-        return get_image(r)
+#     if 20<c>28:
+#         ad=4
+#         return get_image(r)
 
-    elif 28<=c>=35:
-        ad=5
-        return get_image(r)
+#     elif 28<=c>=35:
+#         ad=5
+#         return get_image(r)
         
-    else:
-        ad=6
-        return get_image(site,account,ad,rule)
+#     else:
+#         ad=6
+#         return get_image(site,account,ad,rule)
 
     
-def get_timing(site,account,ad,rule):
+# def get_timing(site,account,ad,rule):
 
-    tm=time.strftime('%p')
+#     tm=time.strftime('%p')
 
-    if tm=='AM':
-        ad=2
-        return get_image(site,account,ad,rule)
+#     if tm=='AM':
+#         ad=2
 
-    else:
-        ad=3
-        return get_image(site,account,ad,rule)
+#         return get_image(site,account,ad,rule)
+
+#     else:
+#         ad=3
+#         return get_image(site,account,ad,rule)
 
 
 

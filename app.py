@@ -60,7 +60,7 @@ def index(site,account):
 
             res = get_temp(site,account,r)
             
-    except(Exception):
+    except:
            
         res = "https://wallpaperaccess.com/full/57166.jpg"
 
@@ -146,7 +146,7 @@ def query_db(query, args=(), one=False):
 # rule for ads
 def rule(site,account,ad):
     cur=db()
-    cur.execute("select rule_id from qr_code_rule_engine where site_id={} and qr_code_id={} and condition_id={}".format(site,account,ad))
+    cur.execute("select qr_rule_id from t_qr_rules where qr_code_id={}".format(account))
     rule=cur.fetchone()[0]
     return rule
 
@@ -236,12 +236,12 @@ def get_timing(site,account,r):
     if tm=='AM':
         ad=2
         re=get_id(site,account,ad,r)
-        return get_image(re)
 
     else:
         ad=3
         re=get_id(site,account,ad,r)
-        return get_image(re)
+
+    return get_image(re)
 
 
 # calling api's
