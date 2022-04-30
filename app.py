@@ -6,6 +6,7 @@ import threading
 import os
 from flask import Flask, render_template, flash, request, redirect, url_for,send_file
 from test import get_image
+import requests
 #,get_timing,get_temp
 from dotenv import load_dotenv
 
@@ -31,7 +32,6 @@ app=Flask(__name__)
 account = os.environ.get('QRCODE_ACCOUNT')
 site =os.environ.get('QRCODE_SITE')
 
-ad=1
 
 # main api calling through
 
@@ -48,29 +48,34 @@ def index(site,account):
 
     threading.Thread(target=dbstdata(a,data,site,account,tm)).start()
     
-    r=rule(site,account,ad)
-    
-    try:
+    r=rule(site,account)
+    ad=1
+    if 1:
         if r == 1:
-            re=get_id(site,account,ad,r)
-            res = get_image(re)
+            re=get_id(ad,r)
+            res = get_image(re[0])
         elif r == 2:
-            res = get_timing(site,account,r)
+            re = get_timing(site,account,r)
+            res = get_image(re[0])
+        elif r == 3:
+            re = get_temp(site,account,r)
+            res = get_image(re[0])
         else:
-
-            res = get_temp(site,account,r)
+            re = get_temp_time(site,account,r)
+            print(re)
+            res = get_image(re[0])
             
-    except:
+    else:
            
         res = "https://wallpaperaccess.com/full/57166.jpg"
 
 
     return render_template('index.html',res = res)
 
-def get_id(site,account,ad,r):
+def get_id(ad,r):
     cur=db()
-    cur.execute("select id from qr_code_rule_engine where site_id={} and qr_code_id={} and condition_id={} and rule_id={}".format(site,account,ad,r))
-    id_main=cur.fetchone()[0]
+    cur.execute("select id from qr_code_rule_engine where condition_id={} and rule_id={}".format(ad,r))
+    id_main=cur.fetchone()
     return id_main
    
 
@@ -144,9 +149,9 @@ def query_db(query, args=(), one=False):
     return (r[0] if r else None) if one else r
 
 # rule for ads
-def rule(site,account,ad):
+def rule(site,account):
     cur=db()
-    cur.execute("select qr_rule_id from t_qr_rules where qr_code_id={}".format(account))
+    cur.execute("select qr_rule_id from t_qr_rules where qr_code_id={} and site_id={}".format(account,site))
     rule=cur.fetchone()[0]
     return rule
 
@@ -180,12 +185,11 @@ def res(site,account):
     return dfc
 
 def get_latlong(site):
-    
-    query="select latitude,longitude from account where accountId={};".format(site)
+    cur=db()
+    query="select latitude,longitude from account where accountId={}".format(site)
     cur.execute(query)
-    lat=float(cur.fetchone()[0])
-    lng=float(cur.fetchone()[1])
-    return lat,lng
+    latlng=cur.fetchone()
+    return float(latlng[0]),float(latlng[1])
 
     
 
@@ -208,25 +212,23 @@ def get_temp(site,account,r):
 
     geo=get_latlong(site)
     lat,lng=geo[0],geo[1]
-    print(lat,lng)
-    print(type(lat))
-
     c=current_temp(lat,lng)
 
-    if 20<c>28:
+    if 15<c>28:
         ad=4
-        re=get_id(site,account,ad,r)
-        return get_image(re)
+        re=get_id(ad,r)
+ 
 
     elif 28<=c>=35:
         ad=5
-        re=get_id(site,account,ad,r)
-        return get_image(re)
+        re=get_id(ad,r)
+  
         
     else:
         ad=6
-        re=get_id(site,account,ad,r)
-        return get_image(re)
+        re=get_id(ad,r)
+
+    return re
 
     
 def get_timing(site,account,r):
@@ -235,15 +237,47 @@ def get_timing(site,account,r):
 
     if tm=='AM':
         ad=2
-        re=get_id(site,account,ad,r)
+        re=get_id(ad,r)
+
 
     else:
         ad=3
-        re=get_id(site,account,ad,r)
+        re=get_id(ad,r)
 
-    return get_image(re)
+
+    return re
+
+
+def get_temp_time(site,account,r):
+    tme=get_timing(site,account,2)
+    tmp=get_temp(site,account,3)
+    if tme==2 and tmp==4:
+        ad=7
+        re=get_id(ad,r)
+    elif tme==2 and tmp==5:
+        ad=8
+        re=get_id(ad,r)
+    elif tme==2 and tmp==6:
+        ad=9
+        re=get_id(ad,r)
+    elif tme==3 and tmp==4:
+        ad=10
+        re=get_id(ad,r)
+    elif tme==3 and tmp==5:
+        ad=11
+        re=get_id(ad,r)
+    else:
+        ad=12
+        re=get_id(ad,r)
+
+    return re
+        
+
 
 
 # calling api's
 if __name__=="__main__":
     app.run()
+
+
+

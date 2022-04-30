@@ -19,7 +19,7 @@ cur=con.cursor()
 
 def get_image(re):
 
-    query1="select qr_ads_image_path from qr_ads_master where qr_ads_id = {};".format(re)
+    query1="select qr_ads_image_path from qr_ads_master where qr_ads_id = {}".format(re)
 
     cur.execute(query1)
 
