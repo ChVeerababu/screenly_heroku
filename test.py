@@ -19,9 +19,9 @@ lng=os.environ.get('LONGTITUDE')
 con=p.connect(host=host,user=user,password=password,database=database)
 cur=con.cursor()
 
-def get_image(r):
+def get_image(re):
 
-    query1="select qr_ads_image_path from qr_ads_master where qr_ads_id = {};".format(r)
+    query1="select qr_ads_image_path from qr_ads_master where qr_ads_id = {};".format(re)
 
     cur.execute(query1)
 
@@ -29,17 +29,17 @@ def get_image(r):
 
     return img
 
-'''def get_latlong(site):
+def get_latlong(site):
     
     query="select latitude,longitude from account where accountId={};".format(site)
     cur.execute(query)
     lat=eval(cur.fetchone()[0])
     lng=eval(cur.fetchone()[1])
-    return lat,lng'''
+    return lat,lng
 
     
 
-'''def current_temp(lat,lng):
+def current_temp(lat,lng):
     
     api="https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=hourly,daily&appid={}".format(lat,lng,key)
 
@@ -56,8 +56,10 @@ def get_image(r):
 
 def get_temp(r):
 
-    #geo=get_latlong(site)
-    #lat,lng=geo[0],geo[1]
+    geo=get_latlong(site)
+    lat,lng=geo[0],geo[1]
+    print(lat,lng)
+    print(type(lat))
 
     c=current_temp(lat,lng)
 
@@ -84,7 +86,7 @@ def get_timing(site,account,ad,rule):
 
     else:
         ad=3
-        return get_image(site,account,ad,rule)'''
+        return get_image(site,account,ad,rule)
 
 
 

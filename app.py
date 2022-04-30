@@ -17,7 +17,9 @@ host = os.environ.get('RDS_URL')
 user = os.environ.get('RDS_USER')
 password = os.environ.get('RDS_PASS')
 database = os.environ.get('RDS_DB')
-
+key=os.environ.get('API_KEY')
+lat=os.environ.get('LATITUDE')
+lng=os.environ.get('LONGTITUDE')
 
 # take one record for each hour using list
 rest=[]
@@ -29,14 +31,12 @@ app=Flask(__name__)
 account = os.environ.get('QRCODE_ACCOUNT')
 site =os.environ.get('QRCODE_SITE')
 
-
+ad=1
 
 # main api calling through
 
 @app.route('/<int:site>/<int:account>', methods=['GET'])
 def index(site,account):
-    print("user_agent: ",request.user_agent)
-    print("dir:",dir(request.user_agent))
 
     tm=time.strftime("%Y-%m-%d %H-%M-%S")
     if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
@@ -45,24 +45,34 @@ def index(site,account):
     else:
         data={'ip': request.environ['HTTP_X_FORWARDED_FOR'],'timestamp':tm,'browser':request.user_agent._browser, 'os':request.user_agent._platform }
         a = [tm[:10],tm[11:13],data['ip'],data['browser'],data['os']] 
-    print(a)
-    print(data)
+
     threading.Thread(target=dbstdata(a,data,site,account,tm)).start()
     
-    r=rule(site,account)
-    print("rule:",r)
+    r=rule(site,account,ad)
     
-    '''try:
-        res = get_image(r)
+    try:
+        if r == 1:
+            re=get_id(site,account,ad,r)
+            res = get_image(re)
+        elif r == 2:
+            res = get_timing(site,account,r)
+        else:
+
+            res = get_temp(site,account,r)
             
-    except:'''
-        
-    res = "https://wallpaperaccess.com/full/57166.jpg"
+    except(Exception):
+           
+        res = "https://wallpaperaccess.com/full/57166.jpg"
 
 
-    return render_template('index.html',res = res,site_name="IVIS")
+    return render_template('index.html',res = res)
 
-
+def get_id(site,account,ad,r):
+    cur=db()
+    cur.execute("select id from qr_code_rule_engine where site_id={} and qr_code_id={} and condition_id={} and rule_id={}".format(site,account,ad,r))
+    id_main=cur.fetchone()[0]
+    return id_main
+   
 
 # store hourwise data using funcion
 def dbstdata(a,data,site,account,tm):
@@ -134,9 +144,9 @@ def query_db(query, args=(), one=False):
     return (r[0] if r else None) if one else r
 
 # rule for ads
-def rule(site,account):
+def rule(site,account,ad):
     cur=db()
-    cur.execute("select id from qr_code_rule_engine where site_id={} and qr_code_id={}".format(site,account))
+    cur.execute("select rule_id from qr_code_rule_engine where site_id={} and qr_code_id={} and condition_id={}".format(site,account,ad))
     rule=cur.fetchone()[0]
     return rule
 
@@ -168,6 +178,71 @@ def res(site,account):
             l=[i]
     dfc=json.dumps(d,indent=4)
     return dfc
+
+def get_latlong(site):
+    
+    query="select latitude,longitude from account where accountId={};".format(site)
+    cur.execute(query)
+    lat=float(cur.fetchone()[0])
+    lng=float(cur.fetchone()[1])
+    return lat,lng
+
+    
+
+def current_temp(lat,lng):
+    
+    api="https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=hourly,daily&appid={}".format(lat,lng,key)
+
+    r=requests.get(api)
+
+    data=r.json()
+
+    F=float(data['current']['temp'])
+
+    c=F-273.15
+
+    return c
+
+
+def get_temp(site,account,r):
+
+    geo=get_latlong(site)
+    lat,lng=geo[0],geo[1]
+    print(lat,lng)
+    print(type(lat))
+
+    c=current_temp(lat,lng)
+
+    if 20<c>28:
+        ad=4
+        re=get_id(site,account,ad,r)
+        return get_image(re)
+
+    elif 28<=c>=35:
+        ad=5
+        re=get_id(site,account,ad,r)
+        return get_image(re)
+        
+    else:
+        ad=6
+        re=get_id(site,account,ad,r)
+        return get_image(re)
+
+    
+def get_timing(site,account,r):
+
+    tm=time.strftime('%p')
+
+    if tm=='AM':
+        ad=2
+        re=get_id(site,account,ad,r)
+        return get_image(re)
+
+    else:
+        ad=3
+        re=get_id(site,account,ad,r)
+        return get_image(re)
+
 
 # calling api's
 if __name__=="__main__":
