@@ -5,9 +5,8 @@ import pandas as pd
 import threading
 import os
 from flask import Flask, render_template, flash, request, redirect, url_for,send_file
-from test import get_image
-import requests
-#,get_timing,get_temp
+from test import get_image,get_timing,get_temp,get_id
+#get_temp_time,
 from dotenv import load_dotenv
 
 
@@ -18,9 +17,7 @@ host = os.environ.get('RDS_URL')
 user = os.environ.get('RDS_USER')
 password = os.environ.get('RDS_PASS')
 database = os.environ.get('RDS_DB')
-key=os.environ.get('API_KEY')
-lat=os.environ.get('LATITUDE')
-lng=os.environ.get('LONGTITUDE')
+
 
 # take one record for each hour using list
 rest=[]
@@ -48,11 +45,11 @@ def index(site,account):
 
     threading.Thread(target=dbstdata(a,data,site,account,tm)).start()
     
-    r=rule(site,account)
+    r=rule(account)
     ad=1
     if 1:
         if r == 1:
-            re=get_id(ad,r)
+            re=get_id(ad,r,account,site)
             res = get_image(re[0])
         elif r == 2:
             re = get_timing(site,account,r)
@@ -61,9 +58,9 @@ def index(site,account):
             re = get_temp(site,account,r)
             res = get_image(re[0])
         else:
-            re = get_temp_time(site,account,r)
-            print(re)
-            res = get_image(re[0])
+            pass
+            '''re = get_temp_time(site,account,r)
+            res = get_image(re[0])'''
             
     else:
            
@@ -72,11 +69,7 @@ def index(site,account):
 
     return render_template('index.html',res = res)
 
-def get_id(ad,r):
-    cur=db()
-    cur.execute("select id from qr_code_rule_engine where condition_id={} and rule_id={}".format(ad,r))
-    id_main=cur.fetchone()
-    return id_main
+
    
 
 # store hourwise data using funcion
@@ -149,9 +142,9 @@ def query_db(query, args=(), one=False):
     return (r[0] if r else None) if one else r
 
 # rule for ads
-def rule(site,account):
+def rule(account):
     cur=db()
-    cur.execute("select qr_rule_id from t_qr_rules where qr_code_id={} and site_id={}".format(account,site))
+    cur.execute("select qr_rule_id from t_qr_rules where qr_code_id={}".format(account))
     rule=cur.fetchone()[0]
     return rule
 
@@ -175,103 +168,25 @@ def res(site,account):
             d[i['scanned_date']]=l
             del i['scanned_date']
             del i['ipaddress']
+            del i['site_id']
+            del i['qr_code_id']
+            del i['id']
         else:
             date.append(i['scanned_date'])
             d[i['scanned_date']]=[i]
             del i['scanned_date']
             del i['ipaddress']
+            del i['site_id']
+            del i['qr_code_id']
+            del i['id']
             l=[i]
     dfc=json.dumps(d,indent=4)
     return dfc
 
-def get_latlong(site):
-    cur=db()
-    query="select latitude,longitude from account where accountId={}".format(site)
-    cur.execute(query)
-    latlng=cur.fetchone()
-    return float(latlng[0]),float(latlng[1])
-
-    
-
-def current_temp(lat,lng):
-    
-    api="https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=hourly,daily&appid={}".format(lat,lng,key)
-
-    r=requests.get(api)
-
-    data=r.json()
-
-    F=float(data['current']['temp'])
-
-    c=F-273.15
-
-    return c
 
 
-def get_temp(site,account,r):
-
-    geo=get_latlong(site)
-    lat,lng=geo[0],geo[1]
-    c=current_temp(lat,lng)
-
-    if 15<c>28:
-        ad=4
-        re=get_id(ad,r)
- 
-
-    elif 28<=c>=35:
-        ad=5
-        re=get_id(ad,r)
-  
-        
-    else:
-        ad=6
-        re=get_id(ad,r)
-
-    return re
-
-    
-def get_timing(site,account,r):
-
-    tm=time.strftime('%p')
-
-    if tm=='AM':
-        ad=2
-        re=get_id(ad,r)
 
 
-    else:
-        ad=3
-        re=get_id(ad,r)
-
-
-    return re
-
-
-def get_temp_time(site,account,r):
-    tme=get_timing(site,account,2)
-    tmp=get_temp(site,account,3)
-    if tme==2 and tmp==4:
-        ad=7
-        re=get_id(ad,r)
-    elif tme==2 and tmp==5:
-        ad=8
-        re=get_id(ad,r)
-    elif tme==2 and tmp==6:
-        ad=9
-        re=get_id(ad,r)
-    elif tme==3 and tmp==4:
-        ad=10
-        re=get_id(ad,r)
-    elif tme==3 and tmp==5:
-        ad=11
-        re=get_id(ad,r)
-    else:
-        ad=12
-        re=get_id(ad,r)
-
-    return re
-        
 
 
 
