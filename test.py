@@ -3,7 +3,6 @@ import os
 import requests
 from dotenv import load_dotenv
 import time
-#import query as q
 import requests
 load_dotenv()
 
@@ -27,10 +26,11 @@ def get_image(re):
 
     img = cur.fetchone()[0]
 
-
+    print(f"image:{img}")
     return img
 
 def get_id(ad,r,account,site):
+    print(f"ad={ad},r={r},account={account},site={site}")
     cur.execute("select id from qr_code_rule_engine where condition_id={} and rule_id={} and qr_code_id={} and site_id={}".format(ad,r,account,site))
     id_main=cur.fetchone()
     return id_main
@@ -54,8 +54,8 @@ def current_temp(lat,lng):
 
     F=float(data['current']['temp'])
 
-    c=F-273.15
-
+    c=int(F-273.15)
+    
     return c
 
 
@@ -65,12 +65,12 @@ def get_temp(site,account,r):
     lat,lng=geo[0],geo[1]
     c=current_temp(lat,lng)
 
-    if 15<c>28:
+    if 1<=c<=14:
         ad=4
         re=get_id(ad,r,account,site)
  
 
-    elif 28<=c>=35:
+    elif 15<=c<=35:
         ad=5
         re=get_id(ad,r,account,site)
   
@@ -78,7 +78,6 @@ def get_temp(site,account,r):
     else:
         ad=6
         re=get_id(ad,r,account,site)
-
     return re
 
     
@@ -97,11 +96,9 @@ def get_timing(site,account,r):
     return re
 
 
-'''def get_temp_time(site,account,r):
-    tme=get_timing(site,account,2)
-    tmp=get_temp(site,account,3)
-    print("tme============",tme)
-    print("tme============",tmp)
+def get_temp_time(site,account,r):
+    tme=get_timing(site,2,2)[0]
+    tmp=get_temp(site,3,3)[0]
     if tme==2 and tmp==4:
         ad=7
         re=get_id(ad,r,account,site)
@@ -117,15 +114,9 @@ def get_timing(site,account,r):
     elif tme==3 and tmp==5:
         ad=11
         re=get_id(ad,r,account,site)
-    elif tme==3 and tmp==6:
+    else :
         ad=12
         re=get_id(ad,r,account,site)
-    else:
-        re=(1,)
 
-    return re'''
+    return re
         
-
-
-
-
