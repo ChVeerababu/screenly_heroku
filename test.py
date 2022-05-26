@@ -1,3 +1,4 @@
+
 import pymysql as p
 import os
 import requests
@@ -26,11 +27,9 @@ def get_image(re):
 
     img = cur.fetchone()[0]
 
-    print(f"image:{img}")
     return img
 
 def get_id(ad,r,account,site):
-    print(f"ad={ad},r={r},account={account},site={site}")
     cur.execute("select id from qr_code_rule_engine where condition_id={} and rule_id={} and qr_code_id={} and site_id={}".format(ad,r,account,site))
     id_main=cur.fetchone()
     return id_main
@@ -44,7 +43,7 @@ def get_latlong(site):
 
     
 
-def current_temp(lat,lng):
+def current_weather(lat,lng):
     
     api="https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=hourly,daily&appid={}".format(lat,lng,key)
 
@@ -52,10 +51,8 @@ def current_temp(lat,lng):
 
     data=r.json()
 
-    F=float(data['current']['temp'])
+    c=data['current']
 
-    c=int(F-273.15)
-    
     return c
 
 
@@ -63,7 +60,10 @@ def get_temp(site,account,r):
 
     geo=get_latlong(site)
     lat,lng=geo[0],geo[1]
-    c=current_temp(lat,lng)
+    w=current_weather(lat,lng)
+    F=float(w['temp'])
+
+    c=int(F-273.15)
 
     if 1<=c<=14:
         ad=4
@@ -119,4 +119,56 @@ def get_temp_time(site,account,r):
         re=get_id(ad,r,account,site)
 
     return re
+
+
+
+def get_humidity(site,account,r):
+    geo=get_latlong(site)
+    lat,lng=geo[0],geo[1]
+    w=current_weather(lat,lng)
+    c=w['humidity']
+
+    if 1<=c<=30:
+        ad=13
+        re=get_id(ad,r,account,site)
+ 
+
+    elif 31<=c<=60:
+        ad=14
+        re=get_id(ad,r,account,site)
+  
         
+    else:
+        ad=15
+        re=get_id(ad,r,account,site)
+    return re
+
+
+def get_weekdays(site,account,r):
+
+    tm=time.strftime('%A')
+
+    if tm=='Monday':
+        ad=16
+        re=get_id(ad,r,account,site)
+    elif tm=='Tuesday':
+        ad=17
+        re=get_id(ad,r,account,site)
+    elif tm=='Wednesday':
+        ad=18
+        re=get_id(ad,r,account,site)
+    elif tm=='Thursday':
+        ad=19
+        re=get_id(ad,r,account,site)
+    elif tm=='Friday':
+        ad=20
+        re=get_id(ad,r,account,site)
+    elif tm=='Saturday':
+        ad=21
+        re=get_id(ad,r,account,site)
+    else:
+        ad=22
+        re=get_id(ad,r,account,site)
+    return re
+
+

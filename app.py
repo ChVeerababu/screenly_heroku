@@ -15,7 +15,7 @@ import os
 # entire application make by using flask framework
 from flask import Flask, render_template, flash, request, redirect, url_for,send_file
 #for getting rule based methods getting from test.py file
-from test import get_image,get_timing,get_temp,get_id,get_temp_time
+from test import get_image,get_timing,get_temp,get_id,get_temp_time,get_humidity,get_weekdays
 # for getting  database and weather api details
 from dotenv import load_dotenv
 
@@ -89,15 +89,25 @@ def index(site,account):
             re = get_temp(site,account,r)
             #→getting image from id
             res = get_image(re[0])
-        else:
+        elif r == 4:
             #→getting temp_time based on rule 2 & 3
             re = get_temp_time(site,account,r)
             #→getting image from id
             res = get_image(re[0])
+        elif r == 5:
+            #→getting humidity based on rule 5
+            re = get_humidity(site,account,r)
+            #→getting image from id
+            res = get_image(re[0])
+        else :
+            #→getting weekdays based on rule 6
+            re = get_weekdays(site,account,r)
+            res = get_image(re[0])
             
     except:
         # defaultly gave image path
-        res = "https://wallpaperaccess.com/full/57166.jpg"
+        
+        res = get_image(15)
 
     # returned when calling above api index.html will displayed
     return render_template('index.html',res = res)
