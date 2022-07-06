@@ -12,10 +12,9 @@ from asset import get_dict
 import pymysql
 from datetime import datetime
 from aws_rds import get_device,get_latlng,get_rule_id,get_asset_id,get_asset,get_cam,insert_details
-# if eval(os.getenv('DEMOGRAPHICS')):
-#     from facelib import FaceDetector, AgeGenderEstimator
-#     face_detector = FaceDetector()
-#     age_gender_detector = AgeGenderEstimator()
+from facelib import FaceDetector, AgeGenderEstimator
+face_detector = FaceDetector()
+age_gender_detector = AgeGenderEstimator()
 from flask import Flask,request
 
 app = Flask(__name__)
@@ -57,21 +56,12 @@ def temp(lat,lng,rng):
     
     return day+a
 
-
-def sendtoserver(frame):
-    imencoded = cv2.imencode(".jpg", frame)[1]
-    file = {'image': ('image.jpg', imencoded.tobytes(), 'image/jpeg', {'Expires': '0'})}
-    s = time.time()
-    print(type(file))
-    response_face = requests.post(os.getenv('MULTIFACE'), files=file, timeout=5)
-    e = time.time()
-    f = response_face.json()
-    return f,round(e-s,2)
 @app.route('/')
 def sample():
     return "This application running"
 
-    
+
+
 @app.route('/ads', methods = ['GET','POST'])
 def index():
     if request.method == 'POST':
@@ -102,24 +92,17 @@ def index():
             try:
                 if eval(device_data[-2]):
                     try:
-                        agd,it = sendtoserver(img)
+                        faces, boxes, scores, landmarks = face_detector.detect_align(img)
+                        genders, ages = age_gender_detector.detect(faces)
                         #pin('on',[21,26],device_data[-1])
-                        print(agd,type(agd))
-                        print("time for done image",it)
-                        genders=[]
-                        ages=[]
-                        for i in agd:
-                            genders.append(i['gender'])
-                            ages.append(i['age'])
-
                         z = tuple(zip(genders,ages))
                         print("this is z",z)
-                        g = genders.count('male') > genders.count('female')
+                        g = genders.count('Male') > genders.count('Female')
                         print(g)
-                        ages_males = [ y for x, y in z if x  == 'male' ]
+                        ages_males = [ y for x, y in z if x  == 'Male' ]
                         print(ages_males)
                         m_classifications = [(i//device_data[-3] + 1) for i in ages_males]
-                        ages_females = [ y for x, y in z if x  == 'female' ]
+                        ages_females = [ y for x, y in z if x  == 'Female' ]
                         print(ages_females)
                         f_classifications = [(i//device_data[-3] + 1) for i in ages_females]
 
